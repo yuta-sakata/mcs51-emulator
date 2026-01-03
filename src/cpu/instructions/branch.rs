@@ -76,8 +76,6 @@ impl CPU {
             self.write_register(4, 0); // R4
             self.write_register(5, 0); // R5
             self.registers.acc = 0;
-            // 继续保持 delay_skip_counter，因为可能还有外层循环
-            // 不跳转，继续执行
             return;
         }
 
