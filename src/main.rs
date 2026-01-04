@@ -51,17 +51,21 @@ fn main() {
     }
     
     loop {
-
-        
         // 检查PC是否在有效范围内
         if (cpu.registers.pc as usize) >= cpu.rom.len() {
-            println!("程序结杞: PC超出内存范围");
+            println!("程序结束: PC超出内存范围");
             break;
         }
         
         let pc = cpu.registers.pc;
         let opcode = cpu.rom[pc as usize];
         cpu.execute_instruction(opcode);
+        
+        // 更新定时器（每条指令执行后）
+        cpu.update_timers();
+        
+        // 检查并处理中断
+        cpu.check_interrupts();
     }
 
     // 打印最终状态

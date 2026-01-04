@@ -13,25 +13,40 @@ impl CPU {
         // 循环检测：如果检测到紧密循环超过阈值，快进
         if self.loop_detector.record_pc(pc_before) {
             self.loop_detector.increment_fast_forward();
+            
+            // 计算循环大小
+            let loop_size = if self.loop_detector.loop_end >= self.loop_detector.loop_start {
+                ((self.loop_detector.loop_end - self.loop_detector.loop_start) / 2) as u32 // 估算指令数
+            } else {
+                1
+            };
+            self.loop_detector.set_loop_size(loop_size.max(1));
+            
             let multiplier = self.loop_detector.get_fast_forward_multiplier();
+            let has_io = self.loop_detector.has_io_in_loop;
 
             if self.debug {
+                let loop_type = if has_io { "I/O循环" } else { "纯延时循环" };
                 println!(
-                    "\n[LOOP FAST-FORWARD] 检测到紧密循环 ({:#06x}-{:#06x})，已执行 {} 次，快进 {} 个周期...",
+                    "\n[LOOP FAST-FORWARD] 检测到{} ({:#06x}-{:#06x})，已执行 {} 次，I/O次数: {}，快进 {} 个周期 ({:.2} ms @ 12MHz)...",
+                    loop_type,
                     self.loop_detector.loop_start,
                     self.loop_detector.loop_end,
                     self.loop_detector.loop_count,
-                    multiplier
+                    self.loop_detector.io_operation_count,
+                    multiplier,
+                    multiplier as f64 / 12_000_000.0 * 1000.0
                 );
             }
 
             // 快进：增加大量时钟周期
             self.clock_cycles += multiplier;
 
-            // 非常小的循环（< 10字节）很可能是纯延时循环
-            // 不要修改任何寄存器，只是让循环自然结束
-            // 跳到循环结束之后继续
-            self.registers.pc = self.loop_detector.loop_end.wrapping_add(1);
+            // 如果是单指令等待循环（loop_size <= 1），不要修改PC，让它继续执行以便中断能触发
+            // 否则跳到循环结束之后继续
+            if loop_size > 1 {
+                self.registers.pc = self.loop_detector.loop_end.wrapping_add(1);
+            }
 
             self.loop_detector.reset();
             return;
@@ -66,9 +81,12 @@ impl CPU {
             0x14 => self.dec_acc(), // DEC A指令
             0x18..=0x1F => self.dec_rn(opcode - 0x18), // DEC Rn指令
             0x22 => self.ret(), // RET指令
+            0x23 => self.rl_a(), // RL A指令
             0x24 => self.add_acc_immediate(), // ADD A, #data指令
             0x25 => self.add_a_direct(), // ADD A, direct指令
             0x28..=0x2F => self.add_a_rn(opcode - 0x28), // ADD A, Rn指令
+            0x30 => self.jnb_bit(), // JNB bit, rel指令
+            0x32 => self.reti(), // RETI指令
             0x33 => self.rlc_a(), // RLC A指令
             0x34 => self.addc_acc_immediate(), // ADDC A, #data指令
             0x44 => self.orl_acc_immediate(), // ORL A, #data指令
@@ -93,7 +111,13 @@ impl CPU {
             0xB5 => self.cjne_a_direct(), // CJNE A, direct, rel指令（注意0xB5和0xBE都是CJNE变体）
             0xBC => self.cjne_a_immediate(), // CJNE A, #data, rel指令
             0xBE => self.cjne_a_direct(), // CJNE A, direct, rel指令
+            0xB2 => self.cpl_bit(), // CPL bit指令
+            0xC0 => self.push_direct(), // PUSH direct指令
+            0xC2 => self.clr_bit(), // CLR bit指令
             0xC3 => self.clr_c(), // CLR C指令
+            0xC5 => self.xch_a_direct(), // XCH A, direct指令
+            0xD0 => self.pop_direct(), // POP direct指令
+            0xD2 => self.setb_bit(), // SETB bit指令
             0xD5 => self.djnz_direct(), // DJNZ direct, rel指令
             0xD8..=0xDF => self.djnz_rn(opcode - 0xD8), // DJNZ Rn, rel指令
             0xE0 => self.movx_a_dptr(), // MOVX A, @DPTR指令

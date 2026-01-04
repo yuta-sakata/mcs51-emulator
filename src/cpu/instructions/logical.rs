@@ -93,6 +93,16 @@ impl CPU {
         }
     }
 
+    // RL A - 累加器左移（不通过进位）
+    pub(crate) fn rl_a(&mut self) {
+        let carry_out = (self.registers.acc >> 7) & 1;
+        self.registers.acc = (self.registers.acc << 1) | carry_out;
+        
+        if self.debug {
+            println!("rl A");
+        }
+    }
+
     // RRC A - 累加器右移循环通过进位
     pub(crate) fn rrc_a(&mut self) {
         let psw = self.read_sfr(0xD0);
@@ -111,6 +121,79 @@ impl CPU {
         
         if self.debug {
             println!("rrc A");
+        }
+    }
+
+    // SETB bit - 设置指定的位
+    pub(crate) fn setb_bit(&mut self) {
+        let bit_addr = self.fetch_next_byte();
+        
+        // 位地址 0x00-0x7F 对应 RAM 的 0x20-0x2F (位寻址区)
+        // 位地址 0x80-0xFF 对应 SFR 的位寻址区
+        if bit_addr < 0x80 {
+            // 内部RAM位寻址
+            let byte_addr = 0x20 + (bit_addr >> 3) as usize;
+            let bit_pos = bit_addr & 0x07;
+            self.ram[byte_addr] |= 1 << bit_pos;
+        } else {
+            // SFR位寻址
+            // SFR位地址映射：0x80-0x87对应0x80, 0x88-0x8F对应0x88, 0x90-0x97对应0x90, ...
+            let byte_addr = (bit_addr & 0xF8);  // 取高5位得到字节地址
+            let bit_pos = bit_addr & 0x07;
+            let value = self.read_sfr(byte_addr);
+            self.write_sfr(byte_addr, value | (1 << bit_pos));
+        }
+        
+        if self.debug {
+            println!("setb {:#04x}", bit_addr);
+        }
+    }
+
+    // CPL bit - 对指定的位取反
+    pub(crate) fn cpl_bit(&mut self) {
+        let bit_addr = self.fetch_next_byte();
+        
+        // 位地址 0x00-0x7F 对应 RAM 的 0x20-0x2F (位寻址区)
+        // 位地址 0x80-0xFF 对应 SFR 的位寻址区
+        if bit_addr < 0x80 {
+            // 内部RAM位寻址
+            let byte_addr = 0x20 + (bit_addr >> 3) as usize;
+            let bit_pos = bit_addr & 0x07;
+            self.ram[byte_addr] ^= 1 << bit_pos; // 异或实现取反
+        } else {
+            // SFR位寻址
+            let byte_addr = (bit_addr & 0xF8);  // 取高5位得到字节地址
+            let bit_pos = bit_addr & 0x07;
+            let value = self.read_sfr(byte_addr);
+            self.write_sfr(byte_addr, value ^ (1 << bit_pos)); // 异或实现取反
+        }
+        
+        if self.debug {
+            println!("cpl {:#04x}", bit_addr);
+        }
+    }
+
+    // CLR bit - 清除指定的位
+    pub(crate) fn clr_bit(&mut self) {
+        let bit_addr = self.fetch_next_byte();
+        
+        // 位地址 0x00-0x7F 对应 RAM 的 0x20-0x2F (位寻址区)
+        // 位地址 0x80-0xFF 对应 SFR 的位寻址区
+        if bit_addr < 0x80 {
+            // 内部RAM位寻址
+            let byte_addr = 0x20 + (bit_addr >> 3) as usize;
+            let bit_pos = bit_addr & 0x07;
+            self.ram[byte_addr] &= !(1 << bit_pos);
+        } else {
+            // SFR位寻址
+            let byte_addr = (bit_addr & 0xF8);  // 取高5位得到字节地址
+            let bit_pos = bit_addr & 0x07;
+            let value = self.read_sfr(byte_addr);
+            self.write_sfr(byte_addr, value & !(1 << bit_pos));
+        }
+        
+        if self.debug {
+            println!("clr {:#04x}", bit_addr);
         }
     }
 }

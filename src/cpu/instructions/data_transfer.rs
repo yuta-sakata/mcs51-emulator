@@ -2,6 +2,46 @@
 use super::super::CPU;
 
 impl CPU {
+    // PUSH direct - 将直接地址的内容压入堆栈
+    pub(crate) fn push_direct(&mut self) {
+        let direct_address = self.fetch_next_byte();
+        
+        // 读取直接地址的值
+        let value = if direct_address < 0x80 {
+            self.ram[direct_address as usize]
+        } else {
+            self.read_sfr(direct_address)
+        };
+        
+        // 8051 PUSH操作：先SP++，再存储
+        self.registers.sp = self.registers.sp.wrapping_add(1);
+        self.ram[self.registers.sp as usize] = value;
+        
+        if self.debug {
+            println!("push {:#04x}", direct_address);
+        }
+    }
+
+    // POP direct - 从堆栈弹出数据到直接地址
+    pub(crate) fn pop_direct(&mut self) {
+        let direct_address = self.fetch_next_byte();
+        
+        // 8051 POP操作：先读取，再--SP
+        let value = self.ram[self.registers.sp as usize];
+        self.registers.sp = self.registers.sp.wrapping_sub(1);
+        
+        // 写入直接地址
+        if direct_address < 0x80 {
+            self.ram[direct_address as usize] = value;
+        } else {
+            self.write_sfr(direct_address, value);
+        }
+        
+        if self.debug {
+            println!("pop {:#04x}", direct_address);
+        }
+    }
+
     // CLR A - 清除累加器
     pub(crate) fn clr_acc(&mut self) {
         self.registers.acc = 0;
@@ -197,6 +237,34 @@ impl CPU {
         
         if self.debug {
             println!("movx A, @DPTR");
+        }
+    }
+
+    // XCH A, direct - 交换累加器和直接地址的内容
+    pub(crate) fn xch_a_direct(&mut self) {
+        let direct_address = self.fetch_next_byte();
+        
+        // 读取直接地址的值
+        let direct_value = if direct_address < 0x80 {
+            self.ram[direct_address as usize]
+        } else {
+            self.read_sfr(direct_address)
+        };
+        
+        // 保存累加器的值
+        let acc_value = self.registers.acc;
+        
+        // 交换值
+        self.registers.acc = direct_value;
+        
+        if direct_address < 0x80 {
+            self.ram[direct_address as usize] = acc_value;
+        } else {
+            self.write_sfr(direct_address, acc_value);
+        }
+        
+        if self.debug {
+            println!("xch A, {:#04x}", direct_address);
         }
     }
 }

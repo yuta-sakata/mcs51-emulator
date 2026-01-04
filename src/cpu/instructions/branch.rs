@@ -134,6 +134,26 @@ impl CPU {
         self.registers.pc = return_address;
     }
 
+    // RETI - 从中断返回
+    pub(crate) fn reti(&mut self) {
+        // 从堆栈弹出返回地址
+        let high_byte = self.ram[self.registers.sp as usize] as u16;
+        self.registers.sp = self.registers.sp.wrapping_sub(1);
+        let low_byte = self.ram[self.registers.sp as usize] as u16;
+        self.registers.sp = self.registers.sp.wrapping_sub(1);
+
+        let return_address = (high_byte << 8) | low_byte;
+        
+        if self.debug {
+            println!("reti");
+        }
+        
+        self.registers.pc = return_address;
+        
+        // 清除中断标志
+        self.interrupt_in_progress = false;
+    }
+
     // DJNZ Rn, rel - 寄存器减1，不为零则跳转
     pub(crate) fn djnz_rn(&mut self, reg_num: u8) {
         let offset = self.fetch_next_byte() as i8;
@@ -214,6 +234,36 @@ impl CPU {
 
         if self.debug {
             println!("{:<30}\t(direct_value={}, offset={:+})", format!("cjne A, {:#04x}, {:#06x}", direct_address, target), direct_value, offset);
+        }
+    }
+
+    // JNB bit, rel - 如果指定位为0则跳转
+    pub(crate) fn jnb_bit(&mut self) {
+        let bit_addr = self.fetch_next_byte();
+        let offset = self.fetch_next_byte() as i8;
+        
+        // 读取位的值
+        let bit_value = if bit_addr < 0x80 {
+            // 内部RAM位寻址
+            let byte_addr = 0x20 + (bit_addr >> 3) as usize;
+            let bit_pos = bit_addr & 0x07;
+            (self.ram[byte_addr] >> bit_pos) & 1
+        } else {
+            // SFR位寻址
+            let byte_addr = bit_addr & 0xF8;
+            let bit_pos = bit_addr & 0x07;
+            let value = self.read_sfr(byte_addr);
+            (value >> bit_pos) & 1
+        };
+        
+        // 如果位为0，则跳转
+        if bit_value == 0 {
+            let target = (self.registers.pc as i32 + offset as i32) as u16;
+            self.registers.pc = target;
+        }
+        
+        if self.debug {
+            println!("jnb {:#04x}, {:+}", bit_addr, offset);
         }
     }
 }
