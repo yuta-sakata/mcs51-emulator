@@ -1,57 +1,17 @@
 pub mod arithmetic;
 pub mod branch;
 pub mod data_transfer;
+pub mod interrupt;
 pub mod logical;
 
 use super::CPU;
 
 impl CPU {
-    pub fn execute_instruction(&mut self, opcode: u8) {
-        // 保存当前 PC 用于调试输出
-        let pc_before = self.registers.pc;
-
-        // 循环检测：如果检测到紧密循环超过阈值，快进
-        if self.loop_detector.record_pc(pc_before) {
-            self.loop_detector.increment_fast_forward();
-            
-            // 计算循环大小
-            let loop_size = if self.loop_detector.loop_end >= self.loop_detector.loop_start {
-                ((self.loop_detector.loop_end - self.loop_detector.loop_start) / 2) as u32 // 估算指令数
-            } else {
-                1
-            };
-            self.loop_detector.set_loop_size(loop_size.max(1));
-            
-            let multiplier = self.loop_detector.get_fast_forward_multiplier();
-            let has_io = self.loop_detector.has_io_in_loop;
-
-            if self.debug {
-                let loop_type = if has_io { "I/O循环" } else { "纯延时循环" };
-                println!(
-                    "\n[LOOP FAST-FORWARD] 检测到{} ({:#06x}-{:#06x})，已执行 {} 次，I/O次数: {}，快进 {} 个周期 ({:.2} ms @ 12MHz)...",
-                    loop_type,
-                    self.loop_detector.loop_start,
-                    self.loop_detector.loop_end,
-                    self.loop_detector.loop_count,
-                    self.loop_detector.io_operation_count,
-                    multiplier,
-                    multiplier as f64 / 12_000_000.0 * 1000.0
-                );
-            }
-
-            // 快进：增加大量时钟周期
-            self.clock_cycles += multiplier;
-
-            // 如果是单指令等待循环（loop_size <= 1），不要修改PC，让它继续执行以便中断能触发
-            // 否则跳到循环结束之后继续
-            if loop_size > 1 {
-                self.registers.pc = self.loop_detector.loop_end.wrapping_add(1);
-            }
-
-            self.loop_detector.reset();
-            return;
-        }
-
+    pub fn execute_instruction(&mut self, opcode: u8, debug: bool, delay_skip_counter: &mut u32) {
+        // 设置临时调试和优化标志
+        self.debug = debug;
+        self.delay_skip_counter = *delay_skip_counter;
+        
         // 首先增加PC指向下一条指令
         self.registers.pc = self.registers.pc.wrapping_add(1);
 
@@ -59,14 +19,6 @@ impl CPU {
         if self.registers.pc as usize >= self.rom.len() {
             println!("错误: 程序计数器超出内存范围");
             return;
-        }
-
-        // 每条指令增加机器周期（8051通常为12个时钟周期）
-        self.clock_cycles += 12;
-
-        // 在 debug 模式下，打印 [时钟周期][地址] 前缀
-        if self.debug {
-            print!("[{}][{:#06x}] ", self.clock_cycles, pc_before);
         }
 
         match opcode {
@@ -132,6 +84,9 @@ impl CPU {
             0xF8..=0xFF => self.mov_rn_a(opcode - 0xF8), // MOV Rn, A指令
             _ => println!("未知指令: 操作码 = {:#04x}", opcode),
         }
+        
+        // 将修改后的计数器写回
+        *delay_skip_counter = self.delay_skip_counter;
     }
 
     pub(crate) fn nop(&self) {
@@ -160,12 +115,6 @@ impl CPU {
     // 写入寄存器Rn
     pub(crate) fn write_register(&mut self, reg_num: u8, value: u8) {
         let addr = self.get_register_address(reg_num);
-        if self.debug && addr == 8 {
-            println!(
-                "WARNING: About to write to RAM[8] via register! reg_num={}, addr={}, value={}",
-                reg_num, addr, value
-            );
-        }
         self.ram[addr] = value;
     }
 }

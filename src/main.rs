@@ -1,6 +1,8 @@
 mod cpu;
+mod emulator;
+mod loop_detector;
 
-use cpu::CPU;
+use emulator::Emulator;
 use std::env;
 use std::process;
 
@@ -38,11 +40,11 @@ fn main() {
     let hex_file = &args[1];
     let debug_mode = args.iter().any(|arg| arg == "--debug" || arg == "debug");
 
-    // 初始化CPU
-    let mut cpu = CPU::new(debug_mode);
+    // 初始化模拟器
+    let mut emulator = Emulator::new(debug_mode);
 
     //HEX文件加载程序
-    match cpu.load_hex_program(hex_file) {
+    match emulator.cpu.load_hex_program(hex_file) {
         Ok(_) => println!("程序成功从 {} 加载", hex_file),
         Err(e) => {
             eprintln!("加载程序失败: {}", e);
@@ -51,23 +53,37 @@ fn main() {
     }
     
     loop {
+        // 检查是否已停机
+        if emulator.is_halted {
+            if !debug_mode {
+                println!("\n程序执行完成");
+            }
+            break;
+        }
+
         // 检查PC是否在有效范围内
-        if (cpu.registers.pc as usize) >= cpu.rom.len() {
+        if (emulator.cpu.registers.pc as usize) >= emulator.cpu.rom.len() {
             println!("程序结束: PC超出内存范围");
             break;
         }
         
-        let pc = cpu.registers.pc;
-        let opcode = cpu.rom[pc as usize];
-        cpu.execute_instruction(opcode);
+        // 检查指令执行数限制（防止真正的无限循环）
+        if emulator.instruction_count > 100_000_000 {
+            println!("\n警告: 已执行超过1亿条指令，可能存在死循环，强制退出");
+            break;
+        }
+        
+        let pc = emulator.cpu.registers.pc;
+        let opcode = emulator.cpu.rom[pc as usize];
+        emulator.execute_instruction(opcode);
         
         // 更新定时器（每条指令执行后）
-        cpu.update_timers();
+        emulator.cpu.update_timers();
         
         // 检查并处理中断
-        cpu.check_interrupts();
+        emulator.cpu.check_interrupts();
     }
 
     // 打印最终状态
-    println!("CPU 状态：累加器 = {}, 程序计数器 = {}", cpu.registers.acc, cpu.registers.pc);
+    println!("CPU 状态：累加器 = {}, 程序计数器 = {}", emulator.cpu.registers.acc, emulator.cpu.registers.pc);
 }

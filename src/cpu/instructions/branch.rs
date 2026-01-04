@@ -134,25 +134,7 @@ impl CPU {
         self.registers.pc = return_address;
     }
 
-    // RETI - 从中断返回
-    pub(crate) fn reti(&mut self) {
-        // 从堆栈弹出返回地址
-        let high_byte = self.ram[self.registers.sp as usize] as u16;
-        self.registers.sp = self.registers.sp.wrapping_sub(1);
-        let low_byte = self.ram[self.registers.sp as usize] as u16;
-        self.registers.sp = self.registers.sp.wrapping_sub(1);
 
-        let return_address = (high_byte << 8) | low_byte;
-        
-        if self.debug {
-            println!("reti");
-        }
-        
-        self.registers.pc = return_address;
-        
-        // 清除中断标志
-        self.interrupt_in_progress = false;
-    }
 
     // DJNZ Rn, rel - 寄存器减1，不为零则跳转
     pub(crate) fn djnz_rn(&mut self, reg_num: u8) {
