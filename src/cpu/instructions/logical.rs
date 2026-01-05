@@ -196,7 +196,7 @@ impl CPU {
         } else {
             // SFR位寻址
             // SFR位地址映射：0x80-0x87对应0x80, 0x88-0x8F对应0x88, 0x90-0x97对应0x90, ...
-            let byte_addr = (bit_addr & 0xF8);  // 取高5位得到字节地址
+            let byte_addr = bit_addr & 0xF8;  // 取高5位得到字节地址
             let bit_pos = bit_addr & 0x07;
             let value = self.read_sfr(byte_addr);
             self.write_sfr(byte_addr, value | (1 << bit_pos));
@@ -220,7 +220,7 @@ impl CPU {
             self.ram[byte_addr] ^= 1 << bit_pos; // 异或实现取反
         } else {
             // SFR位寻址
-            let byte_addr = (bit_addr & 0xF8);  // 取高5位得到字节地址
+            let byte_addr = bit_addr & 0xF8;  // 取高5位得到字节地址
             let bit_pos = bit_addr & 0x07;
             let value = self.read_sfr(byte_addr);
             self.write_sfr(byte_addr, value ^ (1 << bit_pos)); // 异或实现取反
@@ -244,7 +244,7 @@ impl CPU {
             self.ram[byte_addr] &= !(1 << bit_pos);
         } else {
             // SFR位寻址
-            let byte_addr = (bit_addr & 0xF8);  // 取高5位得到字节地址
+            let byte_addr = bit_addr & 0xF8;  // 取高5位得到字节地址
             let bit_pos = bit_addr & 0x07;
             let value = self.read_sfr(byte_addr);
             self.write_sfr(byte_addr, value & !(1 << bit_pos));

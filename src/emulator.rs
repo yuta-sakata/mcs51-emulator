@@ -74,8 +74,47 @@ impl Emulator {
                 );
             }
 
-            // 快进：增加大量时钟周期
-            self.clock_cycles += multiplier;
+            // 快进：增加大量时钟周期，并且要模拟定时器的计数
+            // 但不能直接循环50万次，需要智能地模拟定时器溢出
+            let cycles_to_fast_forward = multiplier;
+            let mut cycles_forwarded = 0;
+            
+            while cycles_forwarded < cycles_to_fast_forward {
+                // 检查定时器还需要多少周期才会溢出
+                let cycles_until_overflow = self.cpu.get_cycles_until_timer_overflow();
+                
+                if cycles_until_overflow > 0 && cycles_until_overflow < (cycles_to_fast_forward - cycles_forwarded) {
+                    // 定时器会在快进期间溢出
+                    // 快进到溢出点
+                    for _ in 0..cycles_until_overflow {
+                        self.cpu.update_timers();
+                    }
+                    cycles_forwarded += cycles_until_overflow;
+                    
+                    // 检查中断
+                    if self.cpu.check_interrupts() {
+                        // 中断触发，跳出快进
+                        self.clock_cycles += cycles_forwarded;
+                        break;
+                    }
+                } else {
+                    // 定时器不会溢出，或者已经没有运行的定时器
+                    // 直接跳过剩余周期
+                    let remaining = cycles_to_fast_forward - cycles_forwarded;
+                    for _ in 0..remaining.min(10000) { // 限制一次循环不超过1万次
+                        self.cpu.update_timers();
+                        if self.cpu.check_interrupts() {
+                            break;
+                        }
+                    }
+                    cycles_forwarded += remaining.min(10000);
+                    if remaining <= 10000 {
+                        break;
+                    }
+                }
+            }
+            
+            self.clock_cycles += cycles_forwarded;
 
             // 如果是单指令等待循环（loop_size <= 1），不要修改PC，让它继续执行以便中断能触发
             // 否则跳到循环结束之后继续

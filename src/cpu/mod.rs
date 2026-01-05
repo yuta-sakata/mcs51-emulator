@@ -3,7 +3,7 @@ pub mod memory;
 pub mod peripherals;
 pub mod registers;
 
-use hex::FromHexError;
+
 use registers::Registers;
 use std::fmt;
 use std::fs;
@@ -141,6 +141,31 @@ impl CPU {
                 self.sfr[0x0A] = (count & 0xFF) as u8; // TL0
             }
         }
+    }
+
+    // 获取定时器还需要多少个周期才会溢出（用于快进优化）
+    // 返回0表示定时器未运行或已经溢出
+    pub fn get_cycles_until_timer_overflow(&self) -> u64 {
+        let tmod = self.sfr[0x09]; // TMOD寄存器
+        let tcon = self.sfr[0x08]; // TCON寄存器
+        
+        // 检查定时器0
+        let tr0 = (tcon & 0x10) != 0;
+        if tr0 {
+            let mode = tmod & 0x03;
+            if mode == 0x01 {
+                // 模式1：16位定时器
+                let th0 = self.sfr[0x0C];
+                let tl0 = self.sfr[0x0A];
+                let count = ((th0 as u16) << 8) | (tl0 as u16);
+                
+                // 从当前值到0xFFFF需要的周期数（再加1就会溢出到0）
+                let cycles = (0xFFFF - count) as u64 + 1;
+                return cycles;
+            }
+        }
+        
+        0 // 定时器未运行
     }
 
 

@@ -1,6 +1,7 @@
 mod cpu;
 mod emulator;
 mod loop_detector;
+mod instruction_debug;
 
 use emulator::Emulator;
 use std::env;
@@ -42,7 +43,7 @@ fn main() {
     
     // 检查是否是指令表转储模式
     if args.iter().any(|arg| arg == "--inst-dump" || arg == "-i") {
-        cpu::CPU::dump_instruction_table();
+        instruction_debug::dump_instruction_table();
         return;
     }
     
