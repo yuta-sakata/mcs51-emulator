@@ -49,27 +49,27 @@ cargo run -- <hex文件> [--debug]
 运行 `--inst-dump` 可以查看 16x16 的指令实现情况表格：
 
 ```
-[inst-dump] ===================================================================================================
-[inst-dump]       0     1     2     3     4     5     6     7     8     9     A     B     C     D     E     F
-[inst-dump] ===================================================================================================
-[inst-dump]  00   NOP  AJMP  LJMP   INC   INC   INC  ----  ----   INC   INC   INC   INC   INC   INC   INC   INC
-[inst-dump]  10  ----  ---- LCALL   RRC   DEC  ----  ----  ----   DEC   DEC   DEC   DEC   DEC   DEC   DEC   DEC
-[inst-dump]  20  ----  AJMP   RET    RL   ADD   ADD  ----  ----   ADD   ADD   ADD   ADD   ADD   ADD   ADD   ADD
-[inst-dump]  30   JNB  ----  RETI   RLC  ADDC  ----  ----  ----  ----  ----  ----  ----  ----  ----  ----  ----
-[inst-dump]  40  ----  AJMP  ----  ----   ORL  ----  ----  ----   ORL   ORL   ORL   ORL   ORL   ORL   ORL   ORL
-[inst-dump]  50  ----  ----  ----  ----  ----  ----  ----  ----   ANL   ANL   ANL   ANL   ANL   ANL   ANL   ANL
-[inst-dump]  60    JZ  AJMP  ----  ----  ----  ----  ----  ----   XRL   XRL   XRL   XRL   XRL   XRL   XRL   XRL
-[inst-dump]  70   JNZ  ----  ----  ----   MOV   MOV  ----  ----   MOV   MOV   MOV   MOV   MOV   MOV   MOV   MOV
-[inst-dump]  80  SJMP  AJMP   ANL  ----   DIV   MOV  ----  ----   MOV   MOV   MOV   MOV   MOV   MOV   MOV   MOV
-[inst-dump]  90   MOV  ----  ----  ----  ----  SUBB  ----  ----  SUBB  SUBB  SUBB  SUBB  SUBB  SUBB  SUBB  SUBB
-[inst-dump]  A0  ----  AJMP  ----  ----   MUL  ----  ----  ----   MOV   MOV   MOV   MOV   MOV   MOV   MOV   MOV
-[inst-dump]  B0  ----  ----   CPL  ----  ----  CJNE  ----  ----  ----  ----  ----  ----  CJNE  ----  CJNE  ----
-[inst-dump]  C0  PUSH  AJMP   CLR   CLR  ----   XCH  ----  ----  ----  ----  ----  ----  ----  ----  ----  ----
-[inst-dump]  D0   POP  ----  SETB  ----  ----  DJNZ  ----  ----  DJNZ  DJNZ  DJNZ  DJNZ  DJNZ  DJNZ  DJNZ  DJNZ
-[inst-dump]  E0  MOVX  AJMP  ----  ----   CLR   MOV   MOV   MOV   MOV   MOV   MOV   MOV   MOV   MOV   MOV   MOV
-[inst-dump]  F0  MOVX  ----  ----  ----   CPL   MOV   MOV   MOV   MOV   MOV   MOV   MOV   MOV   MOV   MOV   MOV
-[inst-dump] ===================================================================================================
-[inst-dump] 已实现指令: 161/256 (62.9%)
+ ===================================================================================================
+       0     1     2     3     4     5     6     7     8     9     A     B     C     D     E     F
+ ===================================================================================================
+  00   NOP  AJMP  LJMP   INC   INC   INC  ----  ----   INC   INC   INC   INC   INC   INC   INC   INC
+  10  ----  ---- LCALL   RRC   DEC  ----  ----  ----   DEC   DEC   DEC   DEC   DEC   DEC   DEC   DEC
+  20  ----  AJMP   RET    RL   ADD   ADD  ----  ----   ADD   ADD   ADD   ADD   ADD   ADD   ADD   ADD
+  30   JNB  ----  RETI   RLC  ADDC  ----  ----  ----  ----  ----  ----  ----  ----  ----  ----  ----
+  40  ----  AJMP  ----  ----   ORL  ----  ----  ----   ORL   ORL   ORL   ORL   ORL   ORL   ORL   ORL
+  50  ----  ----  ----  ----  ----  ----  ----  ----   ANL   ANL   ANL   ANL   ANL   ANL   ANL   ANL
+  60    JZ  AJMP  ----  ----  ----  ----  ----  ----   XRL   XRL   XRL   XRL   XRL   XRL   XRL   XRL
+  70   JNZ  ----  ----  ----   MOV   MOV  ----  ----   MOV   MOV   MOV   MOV   MOV   MOV   MOV   MOV
+  80  SJMP  AJMP   ANL  ----   DIV   MOV  ----  ----   MOV   MOV   MOV   MOV   MOV   MOV   MOV   MOV
+  90   MOV  ----  ----  ----  ----  SUBB  ----  ----  SUBB  SUBB  SUBB  SUBB  SUBB  SUBB  SUBB  SUBB
+  A0  ----  AJMP  ----  ----   MUL  ----  ----  ----   MOV   MOV   MOV   MOV   MOV   MOV   MOV   MOV
+  B0  ----  ----   CPL  ----  ----  CJNE  ----  ----  ----  ----  ----  ----  CJNE  ----  CJNE  ----
+  C0  PUSH  AJMP   CLR   CLR  ----   XCH  ----  ----  ----  ----  ----  ----  ----  ----  ----  ----
+  D0   POP  ----  SETB  ----  ----  DJNZ  ----  ----  DJNZ  DJNZ  DJNZ  DJNZ  DJNZ  DJNZ  DJNZ  DJNZ
+  E0  MOVX  AJMP  ----  ----   CLR   MOV   MOV   MOV   MOV   MOV   MOV   MOV   MOV   MOV   MOV   MOV
+  F0  MOVX  ----  ----  ----   CPL   MOV   MOV   MOV   MOV   MOV   MOV   MOV   MOV   MOV   MOV   MOV
+ ===================================================================================================
+ 已实现指令: 161/256 (62.9%)
 ```
 
 ### Debug 输出格式
