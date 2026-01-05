@@ -1,5 +1,54 @@
 // 逻辑指令模块
 use super::super::CPU;
+use super::InstructionHandler;
+
+// 注册逻辑指令到指令表
+pub fn register_instructions(table: &mut [Option<InstructionHandler>; 256]) {
+    // ORL A, #data指令
+    table[0x44] = Some(|cpu, _| cpu.orl_acc_immediate());
+    
+    // ORL A, Rn指令 (0x48-0x4F)
+    for opcode in 0x48..=0x4F {
+        table[opcode] = Some(|cpu, op| cpu.orl_a_rn(op - 0x48));
+    }
+    
+    // ANL A, Rn指令 (0x58-0x5F)
+    for opcode in 0x58..=0x5F {
+        table[opcode] = Some(|cpu, op| cpu.anl_a_rn(op - 0x58));
+    }
+    
+    // ANL direct, A指令
+    table[0x82] = Some(|cpu, _| cpu.anl_direct_a());
+    
+    // XRL A, Rn指令 (0x68-0x6F)
+    for opcode in 0x68..=0x6F {
+        table[opcode] = Some(|cpu, op| cpu.xrl_a_rn(op - 0x68));
+    }
+    
+    // CLR C指令
+    table[0xC3] = Some(|cpu, _| cpu.clr_c());
+    
+    // CPL A指令
+    table[0xF4] = Some(|cpu, _| cpu.cpl_a());
+    
+    // CPL bit指令
+    table[0xB2] = Some(|cpu, _| cpu.cpl_bit());
+    
+    // CLR bit指令
+    table[0xC2] = Some(|cpu, _| cpu.clr_bit());
+    
+    // SETB bit指令
+    table[0xD2] = Some(|cpu, _| cpu.setb_bit());
+    
+    // RL A指令
+    table[0x23] = Some(|cpu, _| cpu.rl_a());
+    
+    // RLC A指令
+    table[0x33] = Some(|cpu, _| cpu.rlc_a());
+    
+    // RRC A指令
+    table[0x13] = Some(|cpu, _| cpu.rrc_a());
+}
 
 impl CPU {
     // ORL A, #data - 累加器与立即数进行逻辑或

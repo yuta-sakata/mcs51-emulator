@@ -1,5 +1,50 @@
 // 跳转指令模块
 use super::super::CPU;
+use super::InstructionHandler;
+
+// 注册跳转指令到指令表
+pub fn register_instructions(table: &mut [Option<InstructionHandler>; 256]) {
+    // AJMP指令 (多个操作码)
+    for &opcode in &[0x01, 0x21, 0x41, 0x61, 0x81, 0xA1, 0xC1, 0xE1] {
+        table[opcode] = Some(|cpu, op| cpu.ajmp(op));
+    }
+    
+    // LJMP指令
+    table[0x02] = Some(|cpu, _| cpu.ljmp());
+    
+    // SJMP指令
+    table[0x80] = Some(|cpu, _| cpu.sjmp());
+    
+    // JZ指令
+    table[0x60] = Some(|cpu, _| cpu.jz());
+    
+    // JNZ指令
+    table[0x70] = Some(|cpu, _| cpu.jnz());
+    
+    // JNB bit, rel指令
+    table[0x30] = Some(|cpu, _| cpu.jnb_bit());
+    
+    // LCALL指令
+    table[0x12] = Some(|cpu, _| cpu.lcall());
+    
+    // RET指令
+    table[0x22] = Some(|cpu, _| cpu.ret());
+    
+    // CJNE A, direct, rel指令
+    table[0xB5] = Some(|cpu, _| cpu.cjne_a_direct());
+    table[0xBE] = Some(|cpu, _| cpu.cjne_a_direct());
+    
+    // CJNE A, #data, rel指令
+    table[0xBC] = Some(|cpu, _| cpu.cjne_a_immediate());
+    
+    // DJNZ direct, rel指令
+    table[0xD5] = Some(|cpu, _| cpu.djnz_direct());
+    
+    // DJNZ Rn, rel指令 (0xD8-0xDF)
+    for opcode in 0xD8..=0xDF {
+        table[opcode] = Some(|cpu, op| cpu.djnz_rn(op - 0xD8));
+    }
+}
 
 impl CPU {
     // LJMP addr16 - 长跳转

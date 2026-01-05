@@ -1,5 +1,57 @@
 // 算术指令模块
 use super::super::CPU;
+use super::InstructionHandler;
+
+// 注册算术指令到指令表
+pub fn register_instructions(table: &mut [Option<InstructionHandler>; 256]) {
+    // INC A指令 (0x03, 0x04)
+    table[0x03] = Some(|cpu, _| cpu.inc_acc());
+    table[0x04] = Some(|cpu, _| cpu.inc_acc());
+    
+    // INC direct指令
+    table[0x05] = Some(|cpu, _| cpu.inc_direct());
+    
+    // INC Rn指令 (0x08-0x0F)
+    for opcode in 0x08..=0x0F {
+        table[opcode] = Some(|cpu, op| cpu.inc_rn(op - 0x08));
+    }
+    
+    // DEC A指令
+    table[0x14] = Some(|cpu, _| cpu.dec_acc());
+    
+    // DEC Rn指令 (0x18-0x1F)
+    for opcode in 0x18..=0x1F {
+        table[opcode] = Some(|cpu, op| cpu.dec_rn(op - 0x18));
+    }
+    
+    // ADD A, #data指令
+    table[0x24] = Some(|cpu, _| cpu.add_acc_immediate());
+    
+    // ADD A, direct指令
+    table[0x25] = Some(|cpu, _| cpu.add_a_direct());
+    
+    // ADD A, Rn指令 (0x28-0x2F)
+    for opcode in 0x28..=0x2F {
+        table[opcode] = Some(|cpu, op| cpu.add_a_rn(op - 0x28));
+    }
+    
+    // ADDC A, #data指令
+    table[0x34] = Some(|cpu, _| cpu.addc_acc_immediate());
+    
+    // SUBB A, direct指令
+    table[0x95] = Some(|cpu, _| cpu.subb_a_direct());
+    
+    // SUBB A, Rn指令 (0x98-0x9F)
+    for opcode in 0x98..=0x9F {
+        table[opcode] = Some(|cpu, op| cpu.subb_a_rn(op - 0x98));
+    }
+    
+    // MUL AB指令
+    table[0xA4] = Some(|cpu, _| cpu.mul_ab());
+    
+    // DIV AB指令
+    table[0x84] = Some(|cpu, _| cpu.div_ab());
+}
 
 impl CPU {
     // INC A - 累加器加1
