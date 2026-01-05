@@ -65,12 +65,6 @@ impl CPU {
         *delay_skip_counter = self.delay_skip_counter;
     }
     
-    // 获取已实现的指令数量（用于统计）
-    pub fn get_implemented_instruction_count() -> usize {
-        let table = Self::build_instruction_table();
-        table.iter().filter(|x| x.is_some()).count()
-    }
-    
     // 显示指令表（用于调试和统计）
     pub fn dump_instruction_table() {
         let table = Self::build_instruction_table();
