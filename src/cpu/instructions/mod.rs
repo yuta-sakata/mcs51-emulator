@@ -69,12 +69,12 @@ impl CPU {
     pub fn dump_instruction_table() {
         let table = Self::build_instruction_table();
         
-        println!("[mcs51-emulator][inst-dump] ===================================================================================================");
-        println!("[mcs51-emulator][inst-dump]       0     1     2     3     4     5     6     7     8     9     A     B     C     D     E     F");
-        println!("[mcs51-emulator][inst-dump] ===================================================================================================");
+        println!("[inst-dump] ===================================================================================================");
+        println!("[inst-dump]       0     1     2     3     4     5     6     7     8     9     A     B     C     D     E     F");
+        println!("[inst-dump] ===================================================================================================");
         
         for row in 0..16 {
-            print!("[mcs51-emulator][inst-dump]  {:X}0", row);
+            print!("[inst-dump]  {:X}0", row);
             
             for col in 0..16 {
                 let opcode = (row * 16 + col) as usize;
@@ -87,10 +87,10 @@ impl CPU {
             println!();
         }
         
-        println!("[mcs51-emulator][inst-dump] ===================================================================================================");
+        println!("[inst-dump] ===================================================================================================");
         
         let implemented = table.iter().filter(|x| x.is_some()).count();
-        println!("[mcs51-emulator][inst-dump] 已实现指令: {}/256 ({:.1}%)", 
+        println!("[inst-dump] 已实现指令: {}/256 ({:.1}%)", 
                  implemented, (implemented as f64 / 256.0) * 100.0);
     }
 
