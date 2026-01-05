@@ -6,13 +6,20 @@ pub mod logical;
 
 use super::CPU;
 
-// 指令处理函数类型定义
-pub type InstructionHandler = fn(&mut CPU, u8);
+// 指令信息结构
+#[derive(Clone, Copy)]
+pub struct InstructionInfo {
+    pub handler: fn(&mut CPU, u8),
+    pub mnemonic: &'static str,
+}
+
+// 指令表类型定义
+pub type InstructionTable = [Option<InstructionInfo>; 256];
 
 impl CPU {
     // 构建指令查找表
-    fn build_instruction_table() -> [Option<InstructionHandler>; 256] {
-        let mut table: [Option<InstructionHandler>; 256] = [None; 256];
+    fn build_instruction_table() -> InstructionTable {
+        let mut table: InstructionTable = [None; 256];
         
         // 委托给各个模块注册指令
         arithmetic::register_instructions(&mut table);
@@ -22,7 +29,10 @@ impl CPU {
         logical::register_instructions(&mut table);
         
         // NOP指令（通用指令，在这里注册）
-        table[0x00] = Some(|cpu, _| cpu.nop());
+        table[0x00] = Some(InstructionInfo {
+            handler: |cpu, _| cpu.nop(),
+            mnemonic: "NOP",
+        });
         
         table
     }
@@ -42,11 +52,11 @@ impl CPU {
         }
 
         // 使用静态查找表执行指令
-        static INSTRUCTION_TABLE: std::sync::OnceLock<[Option<InstructionHandler>; 256]> = std::sync::OnceLock::new();
+        static INSTRUCTION_TABLE: std::sync::OnceLock<InstructionTable> = std::sync::OnceLock::new();
         let table = INSTRUCTION_TABLE.get_or_init(|| Self::build_instruction_table());
         
-        if let Some(handler) = table[opcode as usize] {
-            handler(self, opcode);
+        if let Some(info) = &table[opcode as usize] {
+            (info.handler)(self, opcode);
         } else {
             println!("未知指令: 操作码 = {:#04x}", opcode);
         }
@@ -59,6 +69,35 @@ impl CPU {
     pub fn get_implemented_instruction_count() -> usize {
         let table = Self::build_instruction_table();
         table.iter().filter(|x| x.is_some()).count()
+    }
+    
+    // 显示指令表（用于调试和统计）
+    pub fn dump_instruction_table() {
+        let table = Self::build_instruction_table();
+        
+        println!("[mcs51-emulator][inst-dump] ===================================================================================================");
+        println!("[mcs51-emulator][inst-dump]       0     1     2     3     4     5     6     7     8     9     A     B     C     D     E     F");
+        println!("[mcs51-emulator][inst-dump] ===================================================================================================");
+        
+        for row in 0..16 {
+            print!("[mcs51-emulator][inst-dump]  {:X}0", row);
+            
+            for col in 0..16 {
+                let opcode = (row * 16 + col) as usize;
+                if let Some(info) = &table[opcode] {
+                    print!(" {:>5}", info.mnemonic);
+                } else {
+                    print!("  ----");
+                }
+            }
+            println!();
+        }
+        
+        println!("[mcs51-emulator][inst-dump] ===================================================================================================");
+        
+        let implemented = table.iter().filter(|x| x.is_some()).count();
+        println!("[mcs51-emulator][inst-dump] 已实现指令: {}/256 ({:.1}%)", 
+                 implemented, (implemented as f64 / 256.0) * 100.0);
     }
 
     pub(crate) fn nop(&self) {
