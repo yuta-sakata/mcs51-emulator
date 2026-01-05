@@ -1,11 +1,11 @@
 // 中断处理模块
 use super::super::CPU;
-use super::InstructionHandler;
+use super::{InstructionInfo, InstructionTable};
 
 // 注册中断指令到指令表
-pub fn register_instructions(table: &mut [Option<InstructionHandler>; 256]) {
+pub fn register_instructions(table: &mut InstructionTable) {
     // RETI指令
-    table[0x32] = Some(|cpu, _| cpu.reti());
+    table[0x32] = Some(InstructionInfo { handler: |cpu, _| cpu.reti(), mnemonic: "RETI" });
 }
 
 impl CPU {

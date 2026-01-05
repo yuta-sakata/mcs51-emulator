@@ -1,53 +1,62 @@
 // 逻辑指令模块
 use super::super::CPU;
-use super::InstructionHandler;
+use super::{InstructionInfo, InstructionTable};
 
 // 注册逻辑指令到指令表
-pub fn register_instructions(table: &mut [Option<InstructionHandler>; 256]) {
+pub fn register_instructions(table: &mut InstructionTable) {
     // ORL A, #data指令
-    table[0x44] = Some(|cpu, _| cpu.orl_acc_immediate());
+    table[0x44] = Some(InstructionInfo { handler: |cpu, _| cpu.orl_acc_immediate(), mnemonic: "ORL" });
     
     // ORL A, Rn指令 (0x48-0x4F)
     for opcode in 0x48..=0x4F {
-        table[opcode] = Some(|cpu, op| cpu.orl_a_rn(op - 0x48));
+        table[opcode] = Some(InstructionInfo { 
+            handler: |cpu, op| cpu.orl_a_rn(op - 0x48), 
+            mnemonic: "ORL" 
+        });
     }
     
     // ANL A, Rn指令 (0x58-0x5F)
     for opcode in 0x58..=0x5F {
-        table[opcode] = Some(|cpu, op| cpu.anl_a_rn(op - 0x58));
+        table[opcode] = Some(InstructionInfo { 
+            handler: |cpu, op| cpu.anl_a_rn(op - 0x58), 
+            mnemonic: "ANL" 
+        });
     }
     
     // ANL direct, A指令
-    table[0x82] = Some(|cpu, _| cpu.anl_direct_a());
+    table[0x82] = Some(InstructionInfo { handler: |cpu, _| cpu.anl_direct_a(), mnemonic: "ANL" });
     
     // XRL A, Rn指令 (0x68-0x6F)
     for opcode in 0x68..=0x6F {
-        table[opcode] = Some(|cpu, op| cpu.xrl_a_rn(op - 0x68));
+        table[opcode] = Some(InstructionInfo { 
+            handler: |cpu, op| cpu.xrl_a_rn(op - 0x68), 
+            mnemonic: "XRL" 
+        });
     }
     
     // CLR C指令
-    table[0xC3] = Some(|cpu, _| cpu.clr_c());
+    table[0xC3] = Some(InstructionInfo { handler: |cpu, _| cpu.clr_c(), mnemonic: "CLR" });
     
     // CPL A指令
-    table[0xF4] = Some(|cpu, _| cpu.cpl_a());
+    table[0xF4] = Some(InstructionInfo { handler: |cpu, _| cpu.cpl_a(), mnemonic: "CPL" });
     
     // CPL bit指令
-    table[0xB2] = Some(|cpu, _| cpu.cpl_bit());
+    table[0xB2] = Some(InstructionInfo { handler: |cpu, _| cpu.cpl_bit(), mnemonic: "CPL" });
     
     // CLR bit指令
-    table[0xC2] = Some(|cpu, _| cpu.clr_bit());
+    table[0xC2] = Some(InstructionInfo { handler: |cpu, _| cpu.clr_bit(), mnemonic: "CLR" });
     
     // SETB bit指令
-    table[0xD2] = Some(|cpu, _| cpu.setb_bit());
+    table[0xD2] = Some(InstructionInfo { handler: |cpu, _| cpu.setb_bit(), mnemonic: "SETB" });
     
     // RL A指令
-    table[0x23] = Some(|cpu, _| cpu.rl_a());
+    table[0x23] = Some(InstructionInfo { handler: |cpu, _| cpu.rl_a(), mnemonic: "RL" });
     
     // RLC A指令
-    table[0x33] = Some(|cpu, _| cpu.rlc_a());
+    table[0x33] = Some(InstructionInfo { handler: |cpu, _| cpu.rlc_a(), mnemonic: "RLC" });
     
     // RRC A指令
-    table[0x13] = Some(|cpu, _| cpu.rrc_a());
+    table[0x13] = Some(InstructionInfo { handler: |cpu, _| cpu.rrc_a(), mnemonic: "RRC" });
 }
 
 impl CPU {

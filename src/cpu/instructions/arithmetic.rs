@@ -1,56 +1,68 @@
 // 算术指令模块
 use super::super::CPU;
-use super::InstructionHandler;
+use super::{InstructionInfo, InstructionTable};
 
 // 注册算术指令到指令表
-pub fn register_instructions(table: &mut [Option<InstructionHandler>; 256]) {
+pub fn register_instructions(table: &mut InstructionTable) {
     // INC A指令 (0x03, 0x04)
-    table[0x03] = Some(|cpu, _| cpu.inc_acc());
-    table[0x04] = Some(|cpu, _| cpu.inc_acc());
+    table[0x03] = Some(InstructionInfo { handler: |cpu, _| cpu.inc_acc(), mnemonic: "INC" });
+    table[0x04] = Some(InstructionInfo { handler: |cpu, _| cpu.inc_acc(), mnemonic: "INC" });
     
     // INC direct指令
-    table[0x05] = Some(|cpu, _| cpu.inc_direct());
+    table[0x05] = Some(InstructionInfo { handler: |cpu, _| cpu.inc_direct(), mnemonic: "INC" });
     
     // INC Rn指令 (0x08-0x0F)
     for opcode in 0x08..=0x0F {
-        table[opcode] = Some(|cpu, op| cpu.inc_rn(op - 0x08));
+        table[opcode] = Some(InstructionInfo { 
+            handler: |cpu, op| cpu.inc_rn(op - 0x08), 
+            mnemonic: "INC" 
+        });
     }
     
     // DEC A指令
-    table[0x14] = Some(|cpu, _| cpu.dec_acc());
+    table[0x14] = Some(InstructionInfo { handler: |cpu, _| cpu.dec_acc(), mnemonic: "DEC" });
     
     // DEC Rn指令 (0x18-0x1F)
     for opcode in 0x18..=0x1F {
-        table[opcode] = Some(|cpu, op| cpu.dec_rn(op - 0x18));
+        table[opcode] = Some(InstructionInfo { 
+            handler: |cpu, op| cpu.dec_rn(op - 0x18), 
+            mnemonic: "DEC" 
+        });
     }
     
     // ADD A, #data指令
-    table[0x24] = Some(|cpu, _| cpu.add_acc_immediate());
+    table[0x24] = Some(InstructionInfo { handler: |cpu, _| cpu.add_acc_immediate(), mnemonic: "ADD" });
     
     // ADD A, direct指令
-    table[0x25] = Some(|cpu, _| cpu.add_a_direct());
+    table[0x25] = Some(InstructionInfo { handler: |cpu, _| cpu.add_a_direct(), mnemonic: "ADD" });
     
     // ADD A, Rn指令 (0x28-0x2F)
     for opcode in 0x28..=0x2F {
-        table[opcode] = Some(|cpu, op| cpu.add_a_rn(op - 0x28));
+        table[opcode] = Some(InstructionInfo { 
+            handler: |cpu, op| cpu.add_a_rn(op - 0x28), 
+            mnemonic: "ADD" 
+        });
     }
     
     // ADDC A, #data指令
-    table[0x34] = Some(|cpu, _| cpu.addc_acc_immediate());
+    table[0x34] = Some(InstructionInfo { handler: |cpu, _| cpu.addc_acc_immediate(), mnemonic: "ADDC" });
     
     // SUBB A, direct指令
-    table[0x95] = Some(|cpu, _| cpu.subb_a_direct());
+    table[0x95] = Some(InstructionInfo { handler: |cpu, _| cpu.subb_a_direct(), mnemonic: "SUBB" });
     
     // SUBB A, Rn指令 (0x98-0x9F)
     for opcode in 0x98..=0x9F {
-        table[opcode] = Some(|cpu, op| cpu.subb_a_rn(op - 0x98));
+        table[opcode] = Some(InstructionInfo { 
+            handler: |cpu, op| cpu.subb_a_rn(op - 0x98), 
+            mnemonic: "SUBB" 
+        });
     }
     
     // MUL AB指令
-    table[0xA4] = Some(|cpu, _| cpu.mul_ab());
+    table[0xA4] = Some(InstructionInfo { handler: |cpu, _| cpu.mul_ab(), mnemonic: "MUL" });
     
     // DIV AB指令
-    table[0x84] = Some(|cpu, _| cpu.div_ab());
+    table[0x84] = Some(InstructionInfo { handler: |cpu, _| cpu.div_ab(), mnemonic: "DIV" });
 }
 
 impl CPU {

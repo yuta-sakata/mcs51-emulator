@@ -1,48 +1,54 @@
 // 跳转指令模块
 use super::super::CPU;
-use super::InstructionHandler;
+use super::{InstructionInfo, InstructionTable};
 
 // 注册跳转指令到指令表
-pub fn register_instructions(table: &mut [Option<InstructionHandler>; 256]) {
+pub fn register_instructions(table: &mut InstructionTable) {
     // AJMP指令 (多个操作码)
     for &opcode in &[0x01, 0x21, 0x41, 0x61, 0x81, 0xA1, 0xC1, 0xE1] {
-        table[opcode] = Some(|cpu, op| cpu.ajmp(op));
+        table[opcode] = Some(InstructionInfo { 
+            handler: |cpu, op| cpu.ajmp(op), 
+            mnemonic: "AJMP" 
+        });
     }
     
     // LJMP指令
-    table[0x02] = Some(|cpu, _| cpu.ljmp());
+    table[0x02] = Some(InstructionInfo { handler: |cpu, _| cpu.ljmp(), mnemonic: "LJMP" });
     
     // SJMP指令
-    table[0x80] = Some(|cpu, _| cpu.sjmp());
+    table[0x80] = Some(InstructionInfo { handler: |cpu, _| cpu.sjmp(), mnemonic: "SJMP" });
     
     // JZ指令
-    table[0x60] = Some(|cpu, _| cpu.jz());
+    table[0x60] = Some(InstructionInfo { handler: |cpu, _| cpu.jz(), mnemonic: "JZ" });
     
     // JNZ指令
-    table[0x70] = Some(|cpu, _| cpu.jnz());
+    table[0x70] = Some(InstructionInfo { handler: |cpu, _| cpu.jnz(), mnemonic: "JNZ" });
     
     // JNB bit, rel指令
-    table[0x30] = Some(|cpu, _| cpu.jnb_bit());
+    table[0x30] = Some(InstructionInfo { handler: |cpu, _| cpu.jnb_bit(), mnemonic: "JNB" });
     
     // LCALL指令
-    table[0x12] = Some(|cpu, _| cpu.lcall());
+    table[0x12] = Some(InstructionInfo { handler: |cpu, _| cpu.lcall(), mnemonic: "LCALL" });
     
     // RET指令
-    table[0x22] = Some(|cpu, _| cpu.ret());
+    table[0x22] = Some(InstructionInfo { handler: |cpu, _| cpu.ret(), mnemonic: "RET" });
     
     // CJNE A, direct, rel指令
-    table[0xB5] = Some(|cpu, _| cpu.cjne_a_direct());
-    table[0xBE] = Some(|cpu, _| cpu.cjne_a_direct());
+    table[0xB5] = Some(InstructionInfo { handler: |cpu, _| cpu.cjne_a_direct(), mnemonic: "CJNE" });
+    table[0xBE] = Some(InstructionInfo { handler: |cpu, _| cpu.cjne_a_direct(), mnemonic: "CJNE" });
     
     // CJNE A, #data, rel指令
-    table[0xBC] = Some(|cpu, _| cpu.cjne_a_immediate());
+    table[0xBC] = Some(InstructionInfo { handler: |cpu, _| cpu.cjne_a_immediate(), mnemonic: "CJNE" });
     
     // DJNZ direct, rel指令
-    table[0xD5] = Some(|cpu, _| cpu.djnz_direct());
+    table[0xD5] = Some(InstructionInfo { handler: |cpu, _| cpu.djnz_direct(), mnemonic: "DJNZ" });
     
     // DJNZ Rn, rel指令 (0xD8-0xDF)
     for opcode in 0xD8..=0xDF {
-        table[opcode] = Some(|cpu, op| cpu.djnz_rn(op - 0xD8));
+        table[opcode] = Some(InstructionInfo { 
+            handler: |cpu, op| cpu.djnz_rn(op - 0xD8), 
+            mnemonic: "DJNZ" 
+        });
     }
 }
 

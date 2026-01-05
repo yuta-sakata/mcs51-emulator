@@ -1,77 +1,104 @@
 // 数据传输指令模块
 use super::super::CPU;
-use super::InstructionHandler;
+use super::{InstructionInfo, InstructionTable};
 
 // 注册数据传输指令到指令表
-pub fn register_instructions(table: &mut [Option<InstructionHandler>; 256]) {
+pub fn register_instructions(table: &mut InstructionTable) {
     // MOV A, #data指令
-    table[0x74] = Some(|cpu, _| cpu.mov_a_immediate());
+    table[0x74] = Some(InstructionInfo { handler: |cpu, _| cpu.mov_a_immediate(), mnemonic: "MOV" });
     
     // MOV A, direct指令
-    table[0xE5] = Some(|cpu, _| cpu.mov_a_direct());
+    table[0xE5] = Some(InstructionInfo { handler: |cpu, _| cpu.mov_a_direct(), mnemonic: "MOV" });
     
     // MOV A, Rn指令 (0xE8-0xEF)
     for opcode in 0xE8..=0xEF {
-        table[opcode] = Some(|cpu, op| cpu.mov_a_rn(op - 0xE8));
+        table[opcode] = Some(InstructionInfo { 
+            handler: |cpu, op| cpu.mov_a_rn(op - 0xE8), 
+            mnemonic: "MOV" 
+        });
     }
     
     // MOV A, @Rn指令 (0xE6-0xE7)
-    table[0xE6] = Some(|cpu, op| cpu.mov_a_rn_indirect(op - 0xE6));
-    table[0xE7] = Some(|cpu, op| cpu.mov_a_rn_indirect(op - 0xE6));
+    table[0xE6] = Some(InstructionInfo { 
+        handler: |cpu, op| cpu.mov_a_rn_indirect(op - 0xE6), 
+        mnemonic: "MOV" 
+    });
+    table[0xE7] = Some(InstructionInfo { 
+        handler: |cpu, op| cpu.mov_a_rn_indirect(op - 0xE6), 
+        mnemonic: "MOV" 
+    });
     
     // MOV direct, A指令
-    table[0xF5] = Some(|cpu, _| cpu.mov_direct_a());
+    table[0xF5] = Some(InstructionInfo { handler: |cpu, _| cpu.mov_direct_a(), mnemonic: "MOV" });
     
     // MOV direct, #data指令
-    table[0x75] = Some(|cpu, _| cpu.mov_direct_immediate());
+    table[0x75] = Some(InstructionInfo { handler: |cpu, _| cpu.mov_direct_immediate(), mnemonic: "MOV" });
     
     // MOV direct, direct指令
-    table[0x85] = Some(|cpu, _| cpu.mov_direct_direct());
+    table[0x85] = Some(InstructionInfo { handler: |cpu, _| cpu.mov_direct_direct(), mnemonic: "MOV" });
     
     // MOV Rn, A指令 (0xF8-0xFF)
     for opcode in 0xF8..=0xFF {
-        table[opcode] = Some(|cpu, op| cpu.mov_rn_a(op - 0xF8));
+        table[opcode] = Some(InstructionInfo { 
+            handler: |cpu, op| cpu.mov_rn_a(op - 0xF8), 
+            mnemonic: "MOV" 
+        });
     }
     
     // MOV Rn, #data指令 (0x78-0x7F)
     for opcode in 0x78..=0x7F {
-        table[opcode] = Some(|cpu, op| cpu.mov_rn_immediate(op - 0x78));
+        table[opcode] = Some(InstructionInfo { 
+            handler: |cpu, op| cpu.mov_rn_immediate(op - 0x78), 
+            mnemonic: "MOV" 
+        });
     }
     
     // MOV Rn, direct指令 (0xA8-0xAF)
     for opcode in 0xA8..=0xAF {
-        table[opcode] = Some(|cpu, op| cpu.mov_rn_direct(op - 0xA8));
+        table[opcode] = Some(InstructionInfo { 
+            handler: |cpu, op| cpu.mov_rn_direct(op - 0xA8), 
+            mnemonic: "MOV" 
+        });
     }
     
     // MOV @Rn, A指令 (0xF6-0xF7)
-    table[0xF6] = Some(|cpu, op| cpu.mov_rn_indirect_a(op - 0xF6));
-    table[0xF7] = Some(|cpu, op| cpu.mov_rn_indirect_a(op - 0xF6));
+    table[0xF6] = Some(InstructionInfo { 
+        handler: |cpu, op| cpu.mov_rn_indirect_a(op - 0xF6), 
+        mnemonic: "MOV" 
+    });
+    table[0xF7] = Some(InstructionInfo { 
+        handler: |cpu, op| cpu.mov_rn_indirect_a(op - 0xF6), 
+        mnemonic: "MOV" 
+    });
     
     // MOV direct, Rn指令 (0x88-0x8F)
     for opcode in 0x88..=0x8F {
-        table[opcode] = Some(|cpu, op| cpu.mov_direct_rn(op - 0x88));
+        table[opcode] = Some(InstructionInfo { 
+            handler: |cpu, op| cpu.mov_direct_rn(op - 0x88), 
+            mnemonic: "MOV" 
+        });
     }
     
     // MOV DPTR, #data16指令
-    table[0x90] = Some(|cpu, _| cpu.mov_dptr_immediate());
+    table[0x90] = Some(InstructionInfo { handler: |cpu, _| cpu.mov_dptr_immediate(), mnemonic: "MOV" });
     
     // MOVX A, @DPTR指令
-    table[0xE0] = Some(|cpu, _| cpu.movx_a_dptr());
+    table[0xE0] = Some(InstructionInfo { handler: |cpu, _| cpu.movx_a_dptr(), mnemonic: "MOVX" });
     
     // MOVX @DPTR, A指令
-    table[0xF0] = Some(|cpu, _| cpu.movx_dptr_a());
+    table[0xF0] = Some(InstructionInfo { handler: |cpu, _| cpu.movx_dptr_a(), mnemonic: "MOVX" });
     
     // PUSH direct指令
-    table[0xC0] = Some(|cpu, _| cpu.push_direct());
+    table[0xC0] = Some(InstructionInfo { handler: |cpu, _| cpu.push_direct(), mnemonic: "PUSH" });
     
     // POP direct指令
-    table[0xD0] = Some(|cpu, _| cpu.pop_direct());
+    table[0xD0] = Some(InstructionInfo { handler: |cpu, _| cpu.pop_direct(), mnemonic: "POP" });
     
     // CLR A指令
-    table[0xE4] = Some(|cpu, _| cpu.clr_acc());
+    table[0xE4] = Some(InstructionInfo { handler: |cpu, _| cpu.clr_acc(), mnemonic: "CLR" });
     
     // XCH A, direct指令
-    table[0xC5] = Some(|cpu, _| cpu.xch_a_direct());
+    table[0xC5] = Some(InstructionInfo { handler: |cpu, _| cpu.xch_a_direct(), mnemonic: "XCH" });
 }
 
 impl CPU {
